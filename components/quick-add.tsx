@@ -1,5 +1,5 @@
 "use client";
-import { IconChevronDown, IconPlus } from "@tabler/icons-react";
+import { IconChevronDown, IconPlus, IconTrash } from "@tabler/icons-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -289,21 +289,38 @@ export function QuickAddDialog() {
 								)}
 
 						{/** ADD INCOME BUTTON */}
-						<Button
-							onClick={() => {
-								setAddAmount([
-									...addAmount,
-									{ amount: 0, source: "salary", frequency: "per-month" },
-								]);
-							}}
-							color="#f23b2e"
-							type="button"
-							variant="ghost"
-							className="w-fit cursor-pointer"
-						>
-							<IconPlus color="#f23b2e" />
-							<span className="text-red-500">Add Income</span>
-						</Button>
+						<div className="flex gap-2 justify-between items-center w-full">
+							<Button
+								onClick={() => {
+									setAddAmount([
+										...addAmount,
+										{ amount: 0, source: "salary", frequency: "per-month" },
+									]);
+								}}
+								color="#f23b2e"
+								type="button"
+								variant="ghost"
+								className="w-fit cursor-pointer"
+							>
+
+								<IconPlus color="#00c951" />
+								<span className="text-green-500">Add Income</span>
+							</Button>
+
+
+							{/**REMOVE INCOME BUTTON */}
+							{addAmount.length > 1 && <Button
+								onClick={() => {
+									setAddAmount(addAmount.slice(0, -1));
+								}}
+								type="button"
+								variant="ghost"
+								className="w-fit cursor-pointer"
+							>
+								<IconTrash color="#f23b2e" />
+								<span className="text-red-500">Remove Income</span>
+							</Button>}
+						</div>
 					</div>
 
 					{/**Display TOTAL */}
@@ -339,22 +356,22 @@ export function QuickAddDialog() {
 					<CardContent className="grid gap-6">
 						<div className="grid gap-3">
 							<Select value={category} onValueChange={setCategory}>
-								<SelectTrigger className="w-[180px]">
+								<SelectTrigger className="w-full">
 									<SelectValue placeholder="Select a category" />
 								</SelectTrigger>
-								<SelectContent className="z-10 w-full">
+								<SelectContent className="w-full">
 									<SelectGroup>
 										<SelectLabel>Categories</SelectLabel>
-										<SelectItem value="food">Food</SelectItem>
-										<SelectItem value="travel">Travel</SelectItem>
-										<SelectItem value="entertainment">Entertainment</SelectItem>
-										<SelectItem value="other">Other</SelectItem>
+										<SelectItem className="cursor-pointer" value="food">Food</SelectItem>
+										<SelectItem className="cursor-pointer" value="travel">Travel</SelectItem>
+										<SelectItem className="cursor-pointer" value="entertainment">Entertainment</SelectItem>
+										<SelectItem className="cursor-pointer" value="other">Other</SelectItem>
 									</SelectGroup>
 								</SelectContent>
 							</Select>
 						</div>
 
-						<div>
+						<div className="flex flex-col gap-3">
 							<Label htmlFor="tabs-amount">Amount</Label>
 							<div className="relative">
 								<span className="text-muted-foreground text-sm absolute left-2 top-1/2 -translate-y-1/2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { type Icon, IconCirclePlusFilled, IconMail } from "@tabler/icons-react";
-
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
 	SidebarGroup,
@@ -21,8 +21,6 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 
 export function NavMain({
 	items,
@@ -33,6 +31,9 @@ export function NavMain({
 		icon?: Icon;
 	}[];
 }) {
+	const pathname = usePathname();
+	const router = useRouter();
+
 	return (
 		<SidebarGroup>
 			<SidebarGroupContent className="flex flex-col gap-2">
@@ -70,8 +71,15 @@ export function NavMain({
 				</SidebarMenu>
 				<SidebarMenu>
 					{items.map((item) => (
-						<SidebarMenuItem key={item.title}>
-							<SidebarMenuButton tooltip={item.title}>
+						<SidebarMenuItem
+							className={`${item.url === pathname ? "border-l-2 border-violet-500 text-primary" : ""}`}
+							key={item.title}
+						>
+							<SidebarMenuButton
+								onClick={() => router.push(item.url)}
+								className="cursor-pointer active:bg-sidebar-accent active:text-sidebar-accent-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+								tooltip={item.title}
+							>
 								{item.icon && <item.icon />}
 								<span>{item.title}</span>
 							</SidebarMenuButton>
