@@ -2,26 +2,26 @@
 
 import {
     IconBuildingBank,
+    IconCar,
     IconCash,
+    IconChartLine,
     IconEdit,
     IconEye,
+    IconHeart,
+    IconHome,
     IconPigMoney,
+    IconPlane,
     IconPlus,
     IconTarget,
     IconTrash,
     IconTrendingUp,
     IconWallet,
-    IconHome,
-    IconCar,
-    IconPlane,
-    IconHeart,
-    IconChartLine,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import {
     Dialog,
     DialogContent,
@@ -30,12 +30,18 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { Progress } from "../../components/ui/progress";
-import { Textarea } from "../../components/ui/textarea";
+} from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { Progress } from "../../../components/ui/progress";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../../../components/ui/select";
+import { Textarea } from "../../../components/ui/textarea";
 
 type SavingsItem = {
     id: string;
@@ -351,7 +357,8 @@ export function SavingsManager() {
                             <DialogHeader>
                                 <DialogTitle>Add New Savings Account</DialogTitle>
                                 <DialogDescription>
-                                    Add a new savings account or goal to track your savings progress. Fill in the details below.
+                                    Add a new savings account or goal to track your savings progress. Fill in the
+                                    details below.
                                 </DialogDescription>
                             </DialogHeader>
 
@@ -603,9 +610,7 @@ export function SavingsManager() {
                                         </div>
                                         <Progress value={progress} className="h-2" />
                                         <div className="flex justify-between items-center text-xs">
-                                            <span className="text-muted-foreground">
-                                                {progress.toFixed(1)}% complete
-                                            </span>
+                                            <span className="text-muted-foreground">{progress.toFixed(1)}% complete</span>
                                             <span className="text-muted-foreground">
                                                 ₱{remaining.toLocaleString()} remaining
                                             </span>
@@ -838,15 +843,17 @@ export function SavingsManager() {
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-sm text-muted-foreground">Goal Amount</p>
-                                        <p className="text-2xl font-bold">
-                                            ₱{viewingItem.goalAmount.toLocaleString()}
-                                        </p>
+                                        <p className="text-2xl font-bold">₱{viewingItem.goalAmount.toLocaleString()}</p>
                                     </div>
                                     <div className="space-y-2 w-full">
                                         <div className="flex justify-between text-sm">
                                             <span className="text-muted-foreground">Progress</span>
                                             <span className="font-semibold">
-                                                {calculateProgress(viewingItem.currentAmount, viewingItem.goalAmount).toFixed(1)}%
+                                                {calculateProgress(
+                                                    viewingItem.currentAmount,
+                                                    viewingItem.goalAmount
+                                                ).toFixed(1)}
+                                                %
                                             </span>
                                         </div>
                                         <Progress
@@ -922,7 +929,11 @@ export function SavingsManager() {
                                         <div className="flex justify-between w-full pt-2 border-t">
                                             <span className="text-sm font-medium">Progress</span>
                                             <span className="font-semibold text-green-600">
-                                                {calculateProgress(viewingItem.currentAmount, viewingItem.goalAmount).toFixed(1)}%
+                                                {calculateProgress(
+                                                    viewingItem.currentAmount,
+                                                    viewingItem.goalAmount
+                                                ).toFixed(1)}
+                                                %
                                             </span>
                                         </div>
                                     </div>
@@ -982,4 +993,3 @@ export function SavingsManager() {
         </div>
     );
 }
-

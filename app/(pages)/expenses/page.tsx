@@ -1,6 +1,6 @@
-import { Metadata } from "next";
-import { ExpenseManager } from "@/app/expenses/expense-manager";
-import { ExpenseCategoryBreakdown } from "@/app/expenses/expense-category-breakdown";
+import type { Metadata } from "next";
+import { ExpenseCategoryBreakdown } from "@/app/(pages)/expenses/expense-category-breakdown";
+import { ExpenseManager } from "@/app/(pages)/expenses/expense-manager";
 
 export const metadata: Metadata = {
     title: "Budgety - Expenses List",
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     applicationName: "Budgety",
 };
 
-export default function Page() { 
+export default function Page() {
     // Expenses page with full functionality
     return (
         <div className="min-w-full flex flex-col gap-4 py-4 md:gap-6 md:py-6">

@@ -1,22 +1,67 @@
-import "dotenv/config";
+//server
+
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-// If your Prisma file is located elsewhere, you can change the path
-// import { PrismaClient } from "@/lib/generated/prisma/client";
-import { PrismaClient } from "./generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import pg from "pg";
-
-const { Pool } = pg;
-
-const connectionString = process.env.DATABASE_URL!;
-const pool = new Pool({ connectionString });
-const adapter = new PrismaPg(pool);
-
-const prisma = new PrismaClient({ adapter });
+import { emailOTP } from "better-auth/plugins";
+import prisma from "./prisma";
+import { sendOTPEmail, sendVerificationEmail } from "./sendEmail";
 
 export const auth = betterAuth({
 	database: prismaAdapter(prisma, {
-		provider: "postgresql", // or "mysql", "postgresql", ...etc
+		provider: "postgresql",
 	}),
+	plugins: [
+		emailOTP({
+			async sendVerificationOTP({ email, otp, type }) {
+				try {
+					await sendOTPEmail(email, otp, type);
+					console.log(`OTP sent to ${email} for ${type}`);
+				} catch (error) {
+					console.error(`Failed to send OTP to ${email}:`, error);
+					throw new Error("Failed to send verification OTP");
+				}
+			},
+		}),
+	],
+	emailVerification: {
+		// Send verification email with a link
+		sendVerificationEmail: async ({ user, url }) => {
+			try {
+				await sendVerificationEmail(user.email, url);
+				console.log(`Verification email sent to ${user.email}`);
+			} catch (error) {
+				console.error(`Failed to send verification email to ${user.email}:`, error);
+				throw new Error("Failed to send verification email");
+			}
+		},
+		// Automatically send verification email when user signs up
+		sendOnSignUp: true,
+		// Automatically sign in the user after they verify their email
+		autoSignInAfterVerification: true,
+		// Verification token expires in 1 hour (3600 seconds)
+		expiresIn: 3600,
+		// Callback after successful email verification
+		async afterEmailVerification(user) {
+			console.log(`✅ Email verified successfully for user: ${user.email}`);
+			// You can add custom logic here, such as:
+			// - Grant access to premium features
+			// - Send a welcome email
+			// - Log analytics event
+			// - Update user status in your database
+		},
+	},
+	emailAndPassword: {
+		enabled: true,
+		minPasswordLength: 8,
+		requireEmailVerification: true,
+	},
+	socialProviders: {
+		google: {
+			prompt: "select_account consent",
+			accessType: "offline",
+			enabled: true,
+			clientId: process.env.GOOGLE_CLIENT_ID! as string,
+			clientSecret: process.env.GOOGLE_CLIENT_SECRET! as string,
+		},
+	},
 });

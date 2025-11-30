@@ -2,22 +2,23 @@
 
 // Comprehensive expense management component
 import {
+    IconCalendar,
     IconEdit,
     IconEye,
+    IconFilter,
     IconPlus,
+    IconReceipt,
+    IconSearch,
     IconTrash,
     IconTrendingDown,
     IconWallet,
-    IconCalendar,
-    IconReceipt,
-    IconFilter,
-    IconSearch,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Badge } from "../../../components/ui/badge";
+import { Button } from "../../../components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import {
     Dialog,
     DialogContent,
@@ -26,13 +27,18 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "../../components/ui/dialog";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
-import { Badge } from "../../components/ui/badge";
-import { Textarea } from "../../components/ui/textarea";
-import { categoryTypes, type categoryType } from "../../data";
+} from "../../../components/ui/dialog";
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "../../../components/ui/select";
+import { Textarea } from "../../../components/ui/textarea";
+import { categories } from "../../../data";
 
 type ExpenseItem = {
     id: string;
@@ -53,7 +59,11 @@ const expenseSchema = z.object({
 
 export function ExpenseManager() {
     const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
-    const [userCategories, setUserCategories] = useState<{ categoryId: number; categoryName: string }[]>([]);
+    // Get categories from data.ts instead of localStorage
+    const userCategories = categories.map((cat) => ({
+        categoryId: cat.id,
+        categoryName: cat.name,
+    }));
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -72,17 +82,6 @@ export function ExpenseManager() {
 
     // Load data from localStorage
     useEffect(() => {
-        // Load user categories
-        const storedCategories = localStorage.getItem("selectedCategory");
-        if (storedCategories) {
-            try {
-                const parsed = JSON.parse(storedCategories) as { categoryId: number; categoryName: string }[];
-                setUserCategories(parsed);
-            } catch (error) {
-                console.error("Error parsing categories:", error);
-            }
-        }
-
         // Load expenses
         const storedExpenses = localStorage.getItem("expenses");
         if (storedExpenses) {
@@ -112,7 +111,9 @@ export function ExpenseManager() {
 
     const handleAddExpense = () => {
         try {
-            const selectedCategory = userCategories.find(cat => cat.categoryId.toString() === formData.categoryId);
+            const selectedCategory = userCategories.find(
+                (cat) => cat.categoryId.toString() === formData.categoryId
+            );
             if (!selectedCategory) {
                 toast.error("Please select a valid category");
                 return;
@@ -149,7 +150,9 @@ export function ExpenseManager() {
         if (!editingExpense) return;
 
         try {
-            const selectedCategory = userCategories.find(cat => cat.categoryId.toString() === formData.categoryId);
+            const selectedCategory = userCategories.find(
+                (cat) => cat.categoryId.toString() === formData.categoryId
+            );
             if (!selectedCategory) {
                 toast.error("Please select a valid category");
                 return;
@@ -162,8 +165,13 @@ export function ExpenseManager() {
             });
 
             const updatedExpenses = expenses.map((expense) =>
-                expense.id === editingExpense.id 
-                    ? { ...expense, ...parsed, categoryName: selectedCategory.categoryName, date: new Date().toISOString() } 
+                expense.id === editingExpense.id
+                    ? {
+                        ...expense,
+                        ...parsed,
+                        categoryName: selectedCategory.categoryName,
+                        date: new Date().toISOString(),
+                    }
                     : expense
             );
 
@@ -211,18 +219,27 @@ export function ExpenseManager() {
     // Calculate statistics
     const calculateStats = () => {
         const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const categoryTotals = expenses.reduce((acc, expense) => {
-            if (!acc[expense.categoryId]) {
-                acc[expense.categoryId] = 0;
-            }
-            acc[expense.categoryId] += expense.amount;
-            return acc;
-        }, {} as Record<number, number>);
+        const categoryTotals = expenses.reduce(
+            (acc, expense) => {
+                if (!acc[expense.categoryId]) {
+                    acc[expense.categoryId] = 0;
+                }
+                acc[expense.categoryId] += expense.amount;
+                return acc;
+            },
+            {} as Record<number, number>
+        );
 
         const topCategory = Object.entries(categoryTotals).reduce(
             (max, [categoryId, total]) => {
-                const category = userCategories.find(cat => cat.categoryId === Number(categoryId));
-                return total > max.total ? { categoryId: Number(categoryId), categoryName: category?.categoryName || "Unknown", total } : max;
+                const category = userCategories.find((cat) => cat.categoryId === Number(categoryId));
+                return total > max.total
+                    ? {
+                        categoryId: Number(categoryId),
+                        categoryName: category?.categoryName || "Unknown",
+                        total,
+                    }
+                    : max;
             },
             { categoryId: 0, categoryName: "", total: 0 }
         );
@@ -234,9 +251,11 @@ export function ExpenseManager() {
 
     // Filter expenses
     const filteredExpenses = expenses.filter((expense) => {
-        const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            expense.categoryName.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = filterCategory === "all" || expense.categoryId.toString() === filterCategory;
+        const matchesSearch =
+            expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            expense.categoryName.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory =
+            filterCategory === "all" || expense.categoryId.toString() === filterCategory;
         return matchesSearch && matchesCategory;
     });
 
@@ -247,8 +266,8 @@ export function ExpenseManager() {
     };
 
     const getCategoryIcon = (categoryId: number) => {
-        const categoryType = categoryTypes.find(type => type.id === categoryId);
-        return categoryType || categoryTypes[5]; // Default to "Other" (index 5)
+        const categoryType = categories.find((type) => type.id === categoryId);
+        return categoryType || categories[5]; // Default to "Other" (index 5)
     };
 
     return (
@@ -262,7 +281,9 @@ export function ExpenseManager() {
                             <IconWallet className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold text-red-600">₱{totalExpenses.toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-red-600">
+                                ₱{totalExpenses.toLocaleString()}
+                            </div>
                             <p className="text-xs text-muted-foreground">All time spending</p>
                         </CardContent>
                     </Card>
@@ -286,7 +307,9 @@ export function ExpenseManager() {
                         <CardContent>
                             <div className="text-lg font-bold">{topCategory.categoryName || "None"}</div>
                             <p className="text-xs text-muted-foreground">
-                                {topCategory.total > 0 ? `₱${topCategory.total.toLocaleString()}` : "No expenses yet"}
+                                {topCategory.total > 0
+                                    ? `₱${topCategory.total.toLocaleString()}`
+                                    : "No expenses yet"}
                             </p>
                         </CardContent>
                     </Card>
@@ -298,7 +321,9 @@ export function ExpenseManager() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{Object.keys(categoryTotals).length}</div>
-                            <p className="text-xs text-muted-foreground">Out of {userCategories.length} available</p>
+                            <p className="text-xs text-muted-foreground">
+                                Out of {userCategories.length} available
+                            </p>
                         </CardContent>
                     </Card>
                 </div>
@@ -321,8 +346,8 @@ export function ExpenseManager() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Categories</SelectItem>
-                                {userCategories.map((category, index) => (
-                                    <SelectItem key={index} value={category.categoryId.toString()}>
+                                {userCategories.map((category) => (
+                                    <SelectItem key={category.categoryId} value={category.categoryId.toString()}>
                                         {category.categoryName}
                                     </SelectItem>
                                 ))}
@@ -393,8 +418,8 @@ export function ExpenseManager() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             {userCategories.map((category) => (
-                                                <SelectItem 
-                                                    key={category.categoryId} 
+                                                <SelectItem
+                                                    key={category.categoryId}
                                                     value={category.categoryId.toString()}
                                                     className="cursor-pointer"
                                                 >
@@ -464,10 +489,9 @@ export function ExpenseManager() {
                                     {expenses.length === 0 ? "No expenses yet" : "No expenses match your filters"}
                                 </h3>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    {expenses.length === 0 
+                                    {expenses.length === 0
                                         ? "Start by adding your first expense to track your spending."
-                                        : "Try adjusting your search or filter criteria."
-                                    }
+                                        : "Try adjusting your search or filter criteria."}
                                 </p>
                                 {expenses.length === 0 && (
                                     <Button onClick={() => setIsAddDialogOpen(true)} className="cursor-pointer">
@@ -479,7 +503,7 @@ export function ExpenseManager() {
                         ) : (
                             filteredExpenses.map((expense) => {
                                 const categoryIcon = getCategoryIcon(expense.categoryId);
-                                
+
                                 return (
                                     <div
                                         key={expense.id}
@@ -495,9 +519,7 @@ export function ExpenseManager() {
 
                                             <div className="flex flex-col flex-1 min-w-0">
                                                 <p className="text-md font-semibold truncate">{expense.description}</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {expense.categoryName}
-                                                </p>
+                                                <p className="text-sm text-muted-foreground">{expense.categoryName}</p>
                                                 <p className="text-lg font-bold text-red-600 mt-1">
                                                     ₱{expense.amount.toLocaleString()}
                                                 </p>
@@ -596,8 +618,8 @@ export function ExpenseManager() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     {userCategories.map((category, index) => (
-                                        <SelectItem 
-                                            key={index} 
+                                        <SelectItem
+                                            key={index}
                                             value={category.categoryId.toString()}
                                             className="cursor-pointer"
                                         >
@@ -646,9 +668,7 @@ export function ExpenseManager() {
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
                         <DialogTitle>Expense Details</DialogTitle>
-                        <DialogDescription>
-                            View the details of your expense.
-                        </DialogDescription>
+                        <DialogDescription>View the details of your expense.</DialogDescription>
                     </DialogHeader>
 
                     {viewingExpense && (
@@ -656,13 +676,15 @@ export function ExpenseManager() {
                             <div className="flex items-center gap-4">
                                 <div
                                     style={{
-                                        backgroundColor: getCategoryIcon(viewingExpense.categoryId).backgroundColor
+                                        backgroundColor: getCategoryIcon(viewingExpense.categoryId).backgroundColor,
                                     }}
                                     className="rounded-xl p-3 size-16 flex items-center justify-center"
                                 >
                                     {(() => {
                                         const Icon = getCategoryIcon(viewingExpense.categoryId).icon;
-                                        return <Icon size={32} color={getCategoryIcon(viewingExpense.categoryId).color} />;
+                                        return (
+                                            <Icon size={32} color={getCategoryIcon(viewingExpense.categoryId).color} />
+                                        );
                                     })()}
                                 </div>
                                 <div className="flex-1">
@@ -684,10 +706,10 @@ export function ExpenseManager() {
                                     <p className="text-sm text-muted-foreground">Date</p>
                                     <p className="text-lg font-semibold flex items-center gap-2">
                                         <IconCalendar size={16} />
-                                        {new Date(viewingExpense.date).toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'long',
-                                            day: 'numeric',
+                                        {new Date(viewingExpense.date).toLocaleDateString("en-US", {
+                                            year: "numeric",
+                                            month: "long",
+                                            day: "numeric",
                                         })}
                                     </p>
                                 </div>
@@ -696,9 +718,7 @@ export function ExpenseManager() {
                             {viewingExpense.notes && (
                                 <div className="space-y-1">
                                     <p className="text-sm text-muted-foreground">Notes</p>
-                                    <p className="text-sm bg-muted p-3 rounded-lg">
-                                        {viewingExpense.notes}
-                                    </p>
+                                    <p className="text-sm bg-muted p-3 rounded-lg">{viewingExpense.notes}</p>
                                 </div>
                             )}
 
@@ -714,10 +734,13 @@ export function ExpenseManager() {
                                     <div className="flex justify-between">
                                         <span className="text-sm">% of Total Expenses</span>
                                         <span className="font-semibold">
-                                            {totalExpenses > 0 
-                                                ? ((categoryTotals[viewingExpense.categoryId] || 0) / totalExpenses * 100).toFixed(1)
-                                                : 0
-                                            }%
+                                            {totalExpenses > 0
+                                                ? (
+                                                    ((categoryTotals[viewingExpense.categoryId] || 0) / totalExpenses) *
+                                                    100
+                                                ).toFixed(1)
+                                                : 0}
+                                            %
                                         </span>
                                     </div>
                                 </div>
@@ -748,8 +771,8 @@ export function ExpenseManager() {
                             Edit
                         </Button>
                     </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                </DialogContent>
+            </Dialog>
+        </div>
     );
 }

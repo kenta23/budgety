@@ -10,7 +10,22 @@ import {
 } from "@tabler/icons-react";
 import { ForwardRefExoticComponent, RefAttributes } from "react";
 
-export const categoryTypes = [
+export enum Frequency {
+	PER_WEEK = "per-week",
+	PER_MONTH = "per-month",
+	PER_YEAR = "per-year",
+}
+
+export type incomeSourcesType = {
+	id: string;
+	name: string;
+	frequency: Frequency;
+	date: Date;
+	source: string;
+	amount: number;
+};
+
+export const categories = [
 	{
 		id: 1,
 		name: "Food",
@@ -54,4 +69,4 @@ export const categoryTypes = [
 		backgroundColor: "#e7f7ee", // lighter green
 	},
 ];
-export type categoryType = (typeof categoryTypes)[number];
+export type categoryType = (typeof categories)[number];

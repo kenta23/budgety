@@ -33,6 +33,7 @@ export function SectionCards() {
 		setTotalSavings(total);
 	};
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
 	useEffect(() => {
 		updateIncome();
 		updateSavings();

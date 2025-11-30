@@ -2,10 +2,10 @@
 
 import { IconCalendar, IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { Badge } from "../../components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Progress } from "../../components/ui/progress";
-import { type categoryType, categoryTypes } from "../../data";
+import { Badge } from "../../../components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
+import { Progress } from "../../../components/ui/progress";
+import { categories, type categoryType } from "../../../data";
 
 type ExpenseItem = {
     id: string;
@@ -64,17 +64,14 @@ export function ExpenseCategoryBreakdown() {
     }, []);
 
     useEffect(() => {
-        if (expenses.length > 0 && userCategories.length > 0) {
+        if (expenses.length > 0 && categories.length > 0) {
             const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
             setTotalExpenses(total);
 
-            const breakdowns: CategoryBreakdown[] = userCategories.map((userCategory) => {
-                const categoryExpenses = expenses.filter(
-                    (expense) => expense.categoryId === userCategory.categoryId
-                );
+            const breakdowns: CategoryBreakdown[] = categories.map((category) => {
+                const categoryExpenses = expenses.filter((expense) => expense.categoryId === category.id);
                 const categoryTotal = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-                const categoryType =
-                    categoryTypes.find((type) => type.id === userCategory.categoryId) || categoryTypes[5];
+                const categoryType = categories.find((type) => type.id === category.id) || categories[5];
 
                 // Find the most recent expense for this category
                 const sortedExpenses = categoryExpenses.sort(
@@ -83,8 +80,8 @@ export function ExpenseCategoryBreakdown() {
                 const lastExpenseDate = sortedExpenses.length > 0 ? sortedExpenses[0].date : "";
 
                 return {
-                    categoryId: userCategory.categoryId,
-                    categoryName: userCategory.categoryName,
+                    categoryId: category.id,
+                    categoryName: category.name,
                     totalAmount: categoryTotal,
                     transactionCount: categoryExpenses.length,
                     averageAmount: categoryExpenses.length > 0 ? categoryTotal / categoryExpenses.length : 0,
@@ -98,9 +95,9 @@ export function ExpenseCategoryBreakdown() {
             breakdowns.sort((a, b) => b.totalAmount - a.totalAmount);
             setCategoryBreakdowns(breakdowns);
         }
-    }, [expenses, userCategories]);
+    }, [expenses]);
 
-    if (userCategories.length === 0) {
+    if (expenses.length === 0) {
         return (
             <Card className="p-8">
                 <div className="text-center">
