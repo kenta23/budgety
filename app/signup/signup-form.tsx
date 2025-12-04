@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { z } from "zod";
 import { emailSignUp } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { auth } from "@/lib/auth";
+import { signUp, useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 const initialState = {
@@ -23,6 +25,11 @@ const initialState = {
 export function SignupForm({ className, ...props }: React.ComponentProps<"form">) {
   const [state, formAction, pending] = useActionState(emailSignUp, initialState);
 
+  console.log("state", state.error);
+
+  const { data } = useSession();
+
+  console.log('session', data?.user);
 
   return (
     <form action={formAction} className={cn("flex flex-col gap-6", className)} {...props}>
@@ -35,23 +42,23 @@ export function SignupForm({ className, ...props }: React.ComponentProps<"form">
         </div>
         <Field>
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
-          <Input id="name" type="text" placeholder="John Doe" required />
+          <Input name="full-name" id="name" type="text" placeholder="John Doe" required />
         </Field>
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Input name="email" id="email" type="email" placeholder="m@example.com" required />
           <FieldDescription>
             We&apos;ll use this to contact you. We will not share your email with anyone else.
           </FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input id="password" type="password" required />
+          <Input name="password" id="password" type="password" required />
           <FieldDescription>Must be at least 8 characters long.</FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
-          <Input id="confirm-password" type="password" required />
+          <Input name="confirm-password" id="confirm-password" type="password" required />
           <FieldDescription>Please confirm your password.</FieldDescription>
         </Field>
         <Field>

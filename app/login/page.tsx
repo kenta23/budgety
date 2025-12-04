@@ -1,7 +1,19 @@
 import { IconInnerShadowTop } from "@tabler/icons-react";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { LoginForm } from "@/app/login/login-form";
+import { auth } from "@/lib/auth";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+	// If user already has a session, redirect away from login
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+
+	if (session) {
+		redirect("/dashboard");
+	}
+
 	return (
 		<div className="grid min-h-svh lg:grid-cols-2">
 			<div className="flex flex-col gap-4 p-6 md:p-10">

@@ -5,7 +5,7 @@ const mailerSend = new MailerSend({
 	apiKey: process.env.MAILERSEND_API_KEY!,
 });
 
-const sentFrom = new Sender("test-86org8ekok0gew13.mlsender.net", "Budgety");
+const sentFrom = new Sender("noreply@test-86org8ekok0gew13.mlsender.net", "Budgety");
 
 interface SendEmailOptions {
 	to: string;

@@ -12,7 +12,7 @@ import {
     IconTrash,
     IconTrendingUp,
 } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
 import { Button } from "../../../components/ui/button";
@@ -29,6 +29,9 @@ import {
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
+import { submitNewIncome } from "@/app/actions/query";
+import Form from 'next/form';
+
 
 type IncomeItem = {
     id: string;
@@ -38,6 +41,7 @@ type IncomeItem = {
     name: string;
     date: string;
 };
+
 
 const incomeSchema = z.object({
     amount: z.number().positive("Amount must be greater than 0"),
@@ -87,6 +91,11 @@ const frequencyLabels: Record<string, string> = {
     "per-year": "Yearly",
 };
 
+const initialState = {
+    message: "",
+    error: null,
+};
+
 export function IncomeManager() {
     const [incomeItems, setIncomeItems] = useState<IncomeItem[]>([]);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -94,6 +103,12 @@ export function IncomeManager() {
     const [editingItem, setEditingItem] = useState<IncomeItem | null>(null);
     const [viewingItem, setViewingItem] = useState<IncomeItem | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+    const [state, formAction, pending] = useActionState(submitNewIncome, initialState)
+
+
+    console.log("state", state);
+    console.log("pending", pending);
+
 
 
     const [formData, setFormData] = useState({
@@ -240,6 +255,10 @@ export function IncomeManager() {
         return error?.message;
     };
 
+
+
+
+
     return (
         <div className="w-full h-auto py-3">
             <div className="flex flex-col gap-6">
@@ -301,124 +320,145 @@ export function IncomeManager() {
                         </DialogTrigger>
 
                         <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add New Income</DialogTitle>
-                                <DialogDescription>
-                                    Add a new income source to track your earnings. Fill in the details below.
-                                </DialogDescription>
-                            </DialogHeader>
+                            <Form action={formAction} onSubmit={() => {
+                                if (!state.error) {
+                                    toast.success(state.message, {
+                                        description: state.message,
+                                    })
+                                    resetForm();
+                                    setIsAddDialogOpen(false);
+                                }
+                                else {
+                                    toast.error("Failed to add new income", {
+                                        description: state.message,
+                                    })
+                                }
+                            }}>
+                                <DialogHeader>
+                                    <DialogTitle>Add New Income</DialogTitle>
+                                    <DialogDescription>
+                                        Add a new income source to track your earnings. Fill in the details below.
+                                    </DialogDescription>
+                                </DialogHeader>
 
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="name">Income Name</Label>
-                                    <Input
-                                        id="name"
-                                        placeholder="e.g., Main Job Salary, Freelance Project"
-                                        value={formData.name}
-                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    />
-                                    {getErrorMessage("name") && (
-                                        <p className="text-sm text-red-500">{getErrorMessage("name")}</p>
-                                    )}
-                                </div>
 
-                                <div className="grid gap-2">
-                                    <Label htmlFor="amount">Amount</Label>
-                                    <div className="relative">
-                                        <span className="text-muted-foreground text-sm absolute left-2 top-1/2 -translate-y-1/2">
-                                            ₱
-                                        </span>
+
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="income_name">Income Name</Label>
                                         <Input
-                                            id="amount"
-                                            type="number"
-                                            min="0"
-                                            step="0.01"
-                                            placeholder="0.00"
-                                            className="pl-6"
-                                            value={formData.amount}
-                                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                                            id="income_name"
+                                            name="income_name"
+                                            placeholder="e.g., Main Job Salary, Freelance Project"
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         />
-                                    </div>
-                                    {getErrorMessage("amount") && (
-                                        <p className="text-sm text-red-500">{getErrorMessage("amount")}</p>
-                                    )}
-                                </div>
-
-                                <div className="grid grid-cols-12 gap-4">
-                                    <div className="grid gap-2 col-span-6">
-                                        <Label htmlFor="source">Income Source</Label>
-                                        <Select
-                                            value={formData.source}
-                                            onValueChange={(value) => setFormData({ ...formData, source: value })}
-                                        >
-                                            <SelectTrigger className="cursor-pointer w-full">
-                                                <SelectValue placeholder="Select income source" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem className="cursor-pointer" value="salary">
-                                                    Salary
-                                                </SelectItem>
-                                                <SelectItem className="cursor-pointer" value="freelance">
-                                                    Freelance
-                                                </SelectItem>
-                                                <SelectItem className="cursor-pointer" value="business">
-                                                    Business
-                                                </SelectItem>
-                                                <SelectItem className="cursor-pointer" value="investment">
-                                                    Investment
-                                                </SelectItem>
-                                                <SelectItem className="cursor-pointer" value="other">
-                                                    Other
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        {getErrorMessage("source") && (
-                                            <p className="text-sm text-red-500">{getErrorMessage("source")}</p>
+                                        {getErrorMessage("name") && (
+                                            <p className="text-sm text-red-500">{getErrorMessage("name")}</p>
                                         )}
                                     </div>
 
-                                    <div className="grid gap-2 col-span-6">
-                                        <Label htmlFor="frequency">Frequency</Label>
-                                        <Select
-                                            value={formData.frequency}
-                                            onValueChange={(value) => setFormData({ ...formData, frequency: value })}
-                                        >
-                                            <SelectTrigger className="cursor-pointer w-full">
-                                                <SelectValue placeholder="Select frequency" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem className="cursor-pointer" value="per-week">
-                                                    Per Week
-                                                </SelectItem>
-                                                <SelectItem className="cursor-pointer" value="per-month">
-                                                    Per Month
-                                                </SelectItem>
-                                                <SelectItem className="cursor-pointer" value="per-year">
-                                                    Per Year
-                                                </SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        {getErrorMessage("frequency") && (
-                                            <p className="text-sm text-red-500">{getErrorMessage("frequency")}</p>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="amount">Amount</Label>
+                                        <div className="relative">
+                                            <span className="text-muted-foreground text-sm absolute left-2 top-1/2 -translate-y-1/2">
+                                                ₱
+                                            </span>
+                                            <Input
+                                                id="amount"
+                                                name="amount"
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="0.00"
+                                                className="pl-6"
+                                                value={formData.amount}
+                                                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                                            />
+                                        </div>
+                                        {getErrorMessage("amount") && (
+                                            <p className="text-sm text-red-500">{getErrorMessage("amount")}</p>
                                         )}
                                     </div>
-                                </div>
-                            </div>
 
-                            <DialogFooter>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        setIsAddDialogOpen(false);
-                                        resetForm();
-                                    }}
-                                >
-                                    Cancel
-                                </Button>
-                                <Button className="cursor-pointer" onClick={handleAddIncome}>
-                                    Add Income
-                                </Button>
-                            </DialogFooter>
+                                    <div className="grid grid-cols-12 gap-4">
+                                        <div className="grid gap-2 col-span-6">
+                                            <Label htmlFor="source">Income Source</Label>
+                                            <Select
+                                                name="source"
+                                                value={formData.source}
+                                                onValueChange={(value) => setFormData({ ...formData, source: value })}
+                                            >
+                                                <SelectTrigger className="cursor-pointer w-full">
+                                                    <SelectValue placeholder="Select income source" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem className="cursor-pointer" value="salary">
+                                                        Salary
+                                                    </SelectItem>
+                                                    <SelectItem className="cursor-pointer" value="freelance">
+                                                        Freelance
+                                                    </SelectItem>
+                                                    <SelectItem className="cursor-pointer" value="business">
+                                                        Business
+                                                    </SelectItem>
+                                                    <SelectItem className="cursor-pointer" value="investment">
+                                                        Investment
+                                                    </SelectItem>
+                                                    <SelectItem className="cursor-pointer" value="other">
+                                                        Other
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {getErrorMessage("source") && (
+                                                <p className="text-sm text-red-500">{getErrorMessage("source")}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="grid gap-2 col-span-6">
+                                            <Label htmlFor="frequency">Frequency</Label>
+                                            <Select
+                                                name="frequency"
+                                                value={formData.frequency}
+                                                onValueChange={(value) => setFormData({ ...formData, frequency: value })}
+                                            >
+                                                <SelectTrigger className="cursor-pointer w-full">
+                                                    <SelectValue placeholder="Select frequency" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem className="cursor-pointer" value="per-week">
+                                                        Per Week
+                                                    </SelectItem>
+                                                    <SelectItem className="cursor-pointer" value="per-month">
+                                                        Per Month
+                                                    </SelectItem>
+                                                    <SelectItem className="cursor-pointer" value="per-year">
+                                                        Per Year
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {getErrorMessage("frequency") && (
+                                                <p className="text-sm text-red-500">{getErrorMessage("frequency")}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <DialogFooter>
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => {
+                                            setIsAddDialogOpen(false);
+                                            resetForm();
+                                        }}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" className="cursor-pointer">
+                                        Add Income
+                                    </Button>
+                                </DialogFooter>
+                            </Form>
                         </DialogContent>
                     </Dialog>
                 </div>

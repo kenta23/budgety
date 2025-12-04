@@ -2,6 +2,7 @@
 
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins";
 import prisma from "./prisma";
 import { sendOTPEmail, sendVerificationEmail } from "./sendEmail";
@@ -22,12 +23,14 @@ export const auth = betterAuth({
 				}
 			},
 		}),
+		nextCookies(),
 	],
 	emailVerification: {
 		// Send verification email with a link
 		sendVerificationEmail: async ({ user, url }) => {
 			try {
-				await sendVerificationEmail(user.email, url);
+				const res = await sendVerificationEmail(user.email, url);
+				console.log("res sendVerificationEmail", res);
 				console.log(`Verification email sent to ${user.email}`);
 			} catch (error) {
 				console.error(`Failed to send verification email to ${user.email}:`, error);
