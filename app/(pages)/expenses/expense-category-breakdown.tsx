@@ -2,10 +2,11 @@
 
 import { IconCalendar, IconTrendingDown, IconTrendingUp } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
+import type { categoryType } from "@/types";
 import { Badge } from "../../../components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import { Progress } from "../../../components/ui/progress";
-import { categories, type categoryType } from "../../../data";
+import { categories } from "../../../data";
 
 type ExpenseItem = {
     id: string;

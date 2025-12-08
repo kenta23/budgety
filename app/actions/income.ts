@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import z from "zod";
-import type { incomeItem, incomeItems } from "@/data";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import type { incomeItem, incomeItems } from "@/types";
 
 /**
  * Helper function to get and validate user session
@@ -158,7 +158,6 @@ export async function editIncome(
 		revalidatePath("/income");
 
 		return { error: null, message: "Income updated successfully", data: updatedIncome };
-
 	} catch (error) {
 		console.error("Error updating income", error);
 		return { error: "Failed to update income", message: "Failed to update income", data: null };

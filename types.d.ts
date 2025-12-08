@@ -17,6 +17,18 @@ export type expenseType = {
     description: string;
 };
 
+export type expenseItem = {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+    amount: number;
+    description: string;
+    notes: string | null;
+    incomeId: string | null;
+    category: string;
+};
+
 
 export type incomeType = {
     id: string;

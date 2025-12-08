@@ -13,9 +13,12 @@ import {
     IconTrendingDown,
     IconWallet,
 } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import z from "zod";
+import { getExpenses } from "@/app/actions/expenses";
+import type { expenseItem } from "@/types";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
@@ -40,17 +43,6 @@ import {
 import { Textarea } from "../../../components/ui/textarea";
 import { categories } from "../../../data";
 
-type ExpenseItem = {
-    id: string;
-    amount: number;
-    categoryId: number;
-    categoryName: string;
-    description: string;
-    date: string;
-    notes?: string;
-    incomeId?: string;
-};
-
 const expenseSchema = z.object({
     amount: z.number().positive("Amount must be greater than 0"),
     categoryId: z.number().min(1, "Please select a category"),
@@ -59,39 +51,57 @@ const expenseSchema = z.object({
 });
 
 export function ExpenseManager() {
-    const [expenses, setExpenses] = useState<ExpenseItem[]>([]);
+    const {
+        data: expensesData,
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ["expenses"],
+        queryFn: async () => await getExpenses(),
+    });
+
+    console.log("expensesData", expensesData);
+
     // Get categories from data.ts instead of localStorage
     const userCategories = categories.map((cat) => ({
         categoryId: cat.id,
         categoryName: cat.name,
     }));
-    const [userIncomes] = useState([{
-        id: "1",
-        name: "Salary",
-    }, {
-        id: "2",
-        name: "Freelance",
-    }, {
-        id: "3",
-        name: "Business",
-    }, {
-        id: "4",
-        name: "Investment",
-    }, {
-        id: "5",
-        name: "Other",
-    }]);
+
+
+    const [userIncomes] = useState([
+        {
+            id: "1",
+            name: "Salary",
+        },
+        {
+            id: "2",
+            name: "Freelance",
+        },
+        {
+            id: "3",
+            name: "Business",
+        },
+        {
+            id: "4",
+            name: "Investment",
+        },
+        {
+            id: "5",
+            name: "Other",
+        },
+    ]);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-    const [editingExpense, setEditingExpense] = useState<ExpenseItem | null>(null);
-    const [viewingExpense, setViewingExpense] = useState<ExpenseItem | null>(null);
+    const [editingExpense, setEditingExpense] = useState<expenseItem | null>(null);
+    const [viewingExpense, setViewingExpense] = useState<expenseItem | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState<string>("all");
 
     const [formData, setFormData] = useState({
         amount: "",
-        categoryId: "",
+        category: "",
         description: "",
         notes: "",
         incomeId: "",
@@ -99,28 +109,28 @@ export function ExpenseManager() {
     const [errors, setErrors] = useState<z.ZodError | null>(null);
 
     // Load data from localStorage
-    useEffect(() => {
-        // Load expenses
-        const storedExpenses = localStorage.getItem("expenses");
-        if (storedExpenses) {
-            try {
-                const parsed = JSON.parse(storedExpenses) as ExpenseItem[];
-                setExpenses(parsed);
-            } catch (error) {
-                console.error("Error parsing expenses:", error);
-            }
-        }
-    }, []);
+    // useEffect(() => {
+    //     // Load expenses
+    //     const storedExpenses = localStorage.getItem("expenses");
+    //     if (storedExpenses) {
+    //         try {
+    //             const parsed = JSON.parse(storedExpenses) as ExpenseItem[];
+    //             setExpenses(parsed);
+    //         } catch (error) {
+    //             console.error("Error parsing expenses:", error);
+    //         }
+    //     }
+    // }, []);
 
-    const saveExpenses = (newExpenses: ExpenseItem[]) => {
-        localStorage.setItem("expenses", JSON.stringify(newExpenses));
-        setExpenses(newExpenses);
-    };
+    // const saveExpenses = (newExpenses: expenseItem[]) => {
+    //     localStorage.setItem("expenses", JSON.stringify(newExpenses));
+    //     setExpenses(newExpenses);
+    // };
 
     const resetForm = () => {
         setFormData({
             amount: "",
-            categoryId: "",
+            category: "",
             description: "",
             notes: "",
             incomeId: "",
@@ -129,100 +139,100 @@ export function ExpenseManager() {
     };
 
     const handleAddExpense = () => {
-        try {
-            const selectedCategory = userCategories.find(
-                (cat) => cat.categoryId.toString() === formData.categoryId
-            );
-            if (!selectedCategory) {
-                toast.error("Please select a valid category");
-                return;
-            }
+        // try {
+        //     const selectedCategory = userCategories.find(
+        //         (cat) => cat.categoryId.toString() === formData.categoryId
+        //     );
+        //     if (!selectedCategory) {
+        //         toast.error("Please select a valid category");
+        //         return;
+        //     }
 
-            const parsed = expenseSchema.parse({
-                ...formData,
-                amount: Number(formData.amount),
-                categoryId: Number(formData.categoryId),
-            });
+        //     const parsed = expenseSchema.parse({
+        //         ...formData,
+        //         amount: Number(formData.amount),
+        //         categoryId: Number(formData.categoryId),
+        //     });
 
-            const newExpense: ExpenseItem = {
-                id: Date.now().toString(),
-                ...parsed,
-                categoryName: selectedCategory.categoryName,
-                date: new Date().toISOString(),
-            };
+        //     const newExpense: ExpenseItem = {
+        //         id: Date.now().toString(),
+        //         ...parsed,
+        //         categoryName: selectedCategory.categoryName,
+        //         date: new Date().toISOString(),
+        //     };
 
-            const updatedExpenses = [...expenses, newExpense];
-            saveExpenses(updatedExpenses);
+        //     const updatedExpenses = [...expenses, newExpense];
+        //     saveExpenses(updatedExpenses);
 
-            toast.success("Expense added successfully", {
-                description: `${parsed.description} has been added to your expenses.`,
-            });
+        //     toast.success("Expense added successfully", {
+        //         description: `${parsed.description} has been added to your expenses.`,
+        //     });
 
-            resetForm();
-            setIsAddDialogOpen(false);
-        } catch (error) {
-            setErrors(error as z.ZodError);
-        }
+        //     resetForm();
+        //     setIsAddDialogOpen(false);
+        // } catch (error) {
+        //     setErrors(error as z.ZodError);
+        // }
     };
 
     const handleEditExpense = () => {
-        if (!editingExpense) return;
+        // if (!editingExpense) return;
 
-        try {
-            const selectedCategory = userCategories.find(
-                (cat) => cat.categoryId.toString() === formData.categoryId
-            );
-            if (!selectedCategory) {
-                toast.error("Please select a valid category");
-                return;
-            }
+        // try {
+        //     const selectedCategory = userCategories.find(
+        //         (cat) => cat.categoryId.toString() === formData.categoryId
+        //     );
+        //     if (!selectedCategory) {
+        //         toast.error("Please select a valid category");
+        //         return;
+        //     }
 
-            const parsed = expenseSchema.parse({
-                ...formData,
-                amount: Number(formData.amount),
-                categoryId: Number(formData.categoryId),
-            });
+        //     const parsed = expenseSchema.parse({
+        //         ...formData,
+        //         amount: Number(formData.amount),
+        //         categoryId: Number(formData.categoryId),
+        //     });
 
-            const updatedExpenses = expenses.map((expense) =>
-                expense.id === editingExpense.id
-                    ? {
-                        ...expense,
-                        ...parsed,
-                        categoryName: selectedCategory.categoryName,
-                        date: new Date().toISOString(),
-                    }
-                    : expense
-            );
+        //     const updatedExpenses = expenses.map((expense) =>
+        //         expense.id === editingExpense.id
+        //             ? {
+        //                 ...expense,
+        //                 ...parsed,
+        //                 categoryName: selectedCategory.categoryName,
+        //                 date: new Date().toISOString(),
+        //             }
+        //             : expense
+        //     );
 
-            saveExpenses(updatedExpenses);
+        //     saveExpenses(updatedExpenses);
 
-            toast.success("Expense updated successfully", {
-                description: `${parsed.description} has been updated.`,
-            });
+        //     toast.success("Expense updated successfully", {
+        //         description: `${parsed.description} has been updated.`,
+        //     });
 
-            resetForm();
-            setIsEditDialogOpen(false);
-            setEditingExpense(null);
-        } catch (error) {
-            setErrors(error as z.ZodError);
-        }
+        //     resetForm();
+        //     setIsEditDialogOpen(false);
+        //     setEditingExpense(null);
+        // } catch (error) {
+        //     setErrors(error as z.ZodError);
+        // }
     };
 
     const handleDeleteExpense = (id: string) => {
-        const expense = expenses.find((e) => e.id === id);
-        const updatedExpenses = expenses.filter((expense) => expense.id !== id);
-        saveExpenses(updatedExpenses);
+        // const expense = expenses.find((e) => e.id === id);
+        // const updatedExpenses = expenses.filter((expense) => expense.id !== id);
+        // saveExpenses(updatedExpenses);
 
-        toast.success("Expense deleted", {
-            description: `${expense?.description} has been removed from your expenses.`,
-        });
+        // toast.success("Expense deleted", {
+        //     description: `${expense?.description} has been removed from your expenses.`,
+        // });
     };
 
-    const openEditDialog = (expense: ExpenseItem) => {
+    const openEditDialog = (expense: expenseItem) => {
         setEditingExpense(expense);
         setFormData({
             amount: expense.amount.toString(),
-            categoryId: expense.categoryId.toString(),
+            category: expense.category.toString(),
             description: expense.description,
             notes: expense.notes || "",
             incomeId: expense.incomeId || "",
@@ -231,51 +241,58 @@ export function ExpenseManager() {
         setErrors(null);
     };
 
-    const openViewDialog = (expense: ExpenseItem) => {
+    const openViewDialog = (expense: any) => {
         setViewingExpense(expense);
         setIsViewDialogOpen(true);
     };
 
     // Calculate statistics
     const calculateStats = () => {
-        const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-        const categoryTotals = expenses.reduce(
-            (acc, expense) => {
-                if (!acc[expense.categoryId]) {
-                    acc[expense.categoryId] = 0;
-                }
-                acc[expense.categoryId] += expense.amount;
-                return acc;
-            },
-            {} as Record<number, number>
-        );
+        const totalExpenses = expensesData?.data?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
 
-        const topCategory = Object.entries(categoryTotals).reduce(
-            (max, [categoryId, total]) => {
-                const category = userCategories.find((cat) => cat.categoryId === Number(categoryId));
-                return total > max.total
-                    ? {
-                        categoryId: Number(categoryId),
-                        categoryName: category?.categoryName || "Unknown",
-                        total,
-                    }
-                    : max;
-            },
-            { categoryId: 0, categoryName: "", total: 0 }
-        );
+        const categoryTotals = expensesData?.data?.reduce((acc, curr) => {
+            if (!acc[curr.category]) {
+                acc[curr.category] = 0;
+            }
+            acc[curr.category] += curr.amount;
+            return acc;
+        }, {} as Record<string, number>);
+
+        console.log("categoryTotals", categoryTotals);
+
+
+
+        const topCategory = Object.entries(categoryTotals || {}).reduce<{ categoryName: string; total: number }>((acc, [categoryName, total]) => {
+            const category = userCategories.find((cat) => cat.categoryName.toLowerCase() === categoryName.toLowerCase());
+
+            return total > acc.total
+                ? {
+                    categoryName: category?.categoryName.toLowerCase() || "Unknown",
+                    total: total,
+                }
+                : acc;
+        }, { categoryName: "", total: 0 });
+
+
 
         return { totalExpenses, categoryTotals, topCategory };
     };
 
     const { totalExpenses, categoryTotals, topCategory } = calculateStats();
 
+    console.log("categoryTotals", categoryTotals);
+    console.log("topCategory", topCategory);
+    console.log("totalExpenses", totalExpenses);
+
     // Filter expenses
-    const filteredExpenses = expenses.filter((expense) => {
+    const filteredExpenses = expensesData?.data?.filter((expense) => {
         const matchesSearch =
             expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            expense.categoryName.toLowerCase().includes(searchTerm.toLowerCase());
+            expense.category.toLowerCase().includes(searchTerm.toLowerCase());
+
+
         const matchesCategory =
-            filterCategory === "all" || expense.categoryId.toString() === filterCategory;
+            filterCategory === "all" || expense.category.toLowerCase() === filterCategory.toLowerCase();
         return matchesSearch && matchesCategory;
     });
 
@@ -285,9 +302,10 @@ export function ExpenseManager() {
         return error?.message;
     };
 
-    const getCategoryIcon = (categoryId: number) => {
-        const categoryType = categories.find((type) => type.id === categoryId);
-        return categoryType || categories[5]; // Default to "Other" (index 5)
+    const getCategoryIcon = (categoryname: string) => {
+        const categoryType = categories.find((type) => type.name.toLowerCase() === categoryname.toLowerCase());
+
+        return categoryType ?? categories[5]; // Default to "Other" (index 5)
     };
 
     return (
@@ -314,7 +332,7 @@ export function ExpenseManager() {
                             <IconReceipt className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{expenses.length}</div>
+                            <div className="text-2xl font-bold">{expensesData?.data?.length}</div>
                             <p className="text-xs text-muted-foreground">Expense entries</p>
                         </CardContent>
                     </Card>
@@ -325,7 +343,7 @@ export function ExpenseManager() {
                             <IconTrendingDown className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-lg font-bold">{topCategory.categoryName || "None"}</div>
+                            <div className="text-lg font-bold">{topCategory.categoryName.charAt(0).toUpperCase() + topCategory.categoryName.slice(1) || "None"}</div>
                             <p className="text-xs text-muted-foreground">
                                 {topCategory.total > 0
                                     ? `₱${topCategory.total.toLocaleString()}`
@@ -340,7 +358,7 @@ export function ExpenseManager() {
                             <IconFilter className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{Object.keys(categoryTotals).length}</div>
+                            <div className="text-2xl font-bold">{Object.keys(categoryTotals || {}).length}</div>
                             <p className="text-xs text-muted-foreground">
                                 Out of {userCategories.length} available
                             </p>
@@ -367,7 +385,7 @@ export function ExpenseManager() {
                             <SelectContent>
                                 <SelectItem value="all">All Categories</SelectItem>
                                 {userCategories.map((category) => (
-                                    <SelectItem key={category.categoryId} value={category.categoryId.toString()}>
+                                    <SelectItem key={category.categoryId} value={category.categoryName}>
                                         {category.categoryName}
                                     </SelectItem>
                                 ))}
@@ -430,8 +448,8 @@ export function ExpenseManager() {
                                 <div className="grid gap-2">
                                     <Label htmlFor="category">Category</Label>
                                     <Select
-                                        value={formData.categoryId}
-                                        onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                                        value={formData.category}
+                                        onValueChange={(value) => setFormData({ ...formData, category: value })}
                                     >
                                         <SelectTrigger className="cursor-pointer">
                                             <SelectValue placeholder="Select a category" />
@@ -440,7 +458,7 @@ export function ExpenseManager() {
                                             {userCategories.map((category) => (
                                                 <SelectItem
                                                     key={category.categoryId}
-                                                    value={category.categoryId.toString()}
+                                                    value={category.categoryName}
                                                     className="cursor-pointer"
                                                 >
                                                     {category.categoryName}
@@ -452,7 +470,6 @@ export function ExpenseManager() {
                                         <p className="text-sm text-red-500">{getErrorMessage("categoryId")}</p>
                                     )}
                                 </div>
-
 
                                 <div className="grid gap-2">
                                     <Label htmlFor="edit-category">Funds to Use</Label>
@@ -531,18 +548,18 @@ export function ExpenseManager() {
                 {/* Expenses List */}
                 {userCategories.length > 0 && (
                     <div className="grid grid-cols-12 gap-4">
-                        {filteredExpenses.length === 0 ? (
+                        {filteredExpenses?.length === 0 ? (
                             <div className="col-span-12 flex flex-col items-center justify-center py-12 text-center">
                                 <IconReceipt size={64} className="text-muted-foreground mb-4" />
                                 <h3 className="text-lg font-semibold mb-2">
-                                    {expenses.length === 0 ? "No expenses yet" : "No expenses match your filters"}
+                                    {expensesData?.data?.length === 0 ? "No expenses yet" : "No expenses match your filters"}
                                 </h3>
                                 <p className="text-sm text-muted-foreground mb-4">
-                                    {expenses.length === 0
+                                    {expensesData?.data?.length === 0
                                         ? "Start by adding your first expense to track your spending."
                                         : "Try adjusting your search or filter criteria."}
                                 </p>
-                                {expenses.length === 0 && (
+                                {expensesData?.data?.length === 0 && (
                                     <Button onClick={() => setIsAddDialogOpen(true)} className="cursor-pointer">
                                         <IconPlus size={20} />
                                         <span>Add Your First Expense</span>
@@ -550,8 +567,8 @@ export function ExpenseManager() {
                                 )}
                             </div>
                         ) : (
-                            filteredExpenses.map((expense) => {
-                                const categoryIcon = getCategoryIcon(expense.categoryId);
+                            filteredExpenses?.map((expense) => {
+                                const categoryIcon = getCategoryIcon(expense.category);
 
                                 return (
                                     <div
@@ -568,12 +585,12 @@ export function ExpenseManager() {
 
                                             <div className="flex flex-col flex-1 min-w-0">
                                                 <p className="text-md font-semibold truncate">{expense.description}</p>
-                                                <p className="text-sm text-muted-foreground">{expense.categoryName}</p>
+                                                <p className="text-sm text-muted-foreground">{expense.category}</p>
                                                 <p className="text-lg font-bold text-red-600 mt-1">
                                                     ₱{expense.amount.toLocaleString()}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {new Date(expense.date).toLocaleDateString()}
+                                                    {new Date(expense.createdAt).toLocaleDateString()}
                                                 </p>
                                             </div>
                                         </div>
@@ -591,7 +608,7 @@ export function ExpenseManager() {
                                                 variant="ghost"
                                                 size="icon"
                                                 className="cursor-pointer hover:bg-blue-100 hover:text-blue-600"
-                                                onClick={() => openEditDialog(expense)}
+                                                onClick={() => openEditDialog(expense as any)}
                                             >
                                                 <IconEdit size={18} />
                                             </Button>
@@ -659,17 +676,17 @@ export function ExpenseManager() {
                         <div className="grid gap-2">
                             <Label htmlFor="edit-category">Category</Label>
                             <Select
-                                value={formData.categoryId}
-                                onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                                value={formData.category}
+                                onValueChange={(value) => setFormData({ ...formData, category: value })}
                             >
                                 <SelectTrigger className="cursor-pointer">
                                     <SelectValue placeholder="Select a category" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {userCategories.map((category, index) => (
+                                    {userCategories.map((category) => (
                                         <SelectItem
-                                            key={index}
-                                            value={category.categoryId.toString()}
+                                            key={category.categoryId}
+                                            value={category.categoryName}
                                             className="cursor-pointer"
                                         >
                                             {category.categoryName}
@@ -681,8 +698,6 @@ export function ExpenseManager() {
                                 <p className="text-sm text-red-500">{getErrorMessage("categoryId")}</p>
                             )}
                         </div>
-
-
 
                         <div className="grid gap-2">
                             <Label htmlFor="edit-notes">Notes (Optional)</Label>
@@ -727,21 +742,21 @@ export function ExpenseManager() {
                             <div className="flex items-center gap-4">
                                 <div
                                     style={{
-                                        backgroundColor: getCategoryIcon(viewingExpense.categoryId).backgroundColor,
+                                        backgroundColor: getCategoryIcon(viewingExpense.category).backgroundColor,
                                     }}
                                     className="rounded-xl p-3 size-16 flex items-center justify-center"
                                 >
                                     {(() => {
-                                        const Icon = getCategoryIcon(viewingExpense.categoryId).icon;
+                                        const Icon = getCategoryIcon(viewingExpense.category).icon;
                                         return (
-                                            <Icon size={32} color={getCategoryIcon(viewingExpense.categoryId).color} />
+                                            <Icon size={32} color={getCategoryIcon(viewingExpense.category).color} />
                                         );
                                     })()}
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-xl font-bold">{viewingExpense.description}</h3>
                                     <Badge variant="secondary" className="mt-1">
-                                        {viewingExpense.categoryName}
+                                        {viewingExpense.category}
                                     </Badge>
                                 </div>
                             </div>
@@ -757,7 +772,7 @@ export function ExpenseManager() {
                                     <p className="text-sm text-muted-foreground">Date</p>
                                     <p className="text-lg font-semibold flex items-center gap-2">
                                         <IconCalendar size={16} />
-                                        {new Date(viewingExpense.date).toLocaleDateString("en-US", {
+                                        {new Date(viewingExpense.createdAt).toLocaleDateString("en-US", {
                                             year: "numeric",
                                             month: "long",
                                             day: "numeric",
@@ -766,7 +781,7 @@ export function ExpenseManager() {
                                 </div>
                             </div>
 
-                            {viewingExpense.notes && (
+                            {viewingExpense?.notes && (
                                 <div className="space-y-1">
                                     <p className="text-sm text-muted-foreground">Notes</p>
                                     <p className="text-sm bg-muted p-3 rounded-lg">{viewingExpense.notes}</p>
@@ -779,7 +794,7 @@ export function ExpenseManager() {
                                     <div className="flex justify-between">
                                         <span className="text-sm">This Category Total</span>
                                         <span className="font-semibold">
-                                            ₱{(categoryTotals[viewingExpense.categoryId] || 0).toLocaleString()}
+                                            ₱{(categoryTotals?.[Number(viewingExpense.id)] || 0).toLocaleString()}
                                         </span>
                                     </div>
                                     <div className="flex justify-between">
@@ -787,7 +802,7 @@ export function ExpenseManager() {
                                         <span className="font-semibold">
                                             {totalExpenses > 0
                                                 ? (
-                                                    ((categoryTotals[viewingExpense.categoryId] || 0) / totalExpenses) *
+                                                    ((categoryTotals?.[Number(viewingExpense.id)] || 0) / totalExpenses) *
                                                     100
                                                 ).toFixed(1)
                                                 : 0}

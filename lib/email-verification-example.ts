@@ -1,6 +1,7 @@
 // Example usage of email verification with Better Auth
 
-import { authClient } from './auth-client';
+import { emailOtp, sendVerificationEmail, signIn, signUp, verifyEmail } from './auth-client';
+import { getSession } from './server';
 
 /**
  * Email Verification Flow Examples
@@ -17,7 +18,7 @@ import { authClient } from './auth-client';
 
 export async function signUpWithEmailVerification() {
   try {
-    const result = await authClient.signUp.email({
+    const result = await signUp.email({
       email: 'user@example.com',
       password: 'SecurePassword123!',
       name: 'John Doe',
@@ -27,7 +28,7 @@ export async function signUpWithEmailVerification() {
 
     console.log('Sign up successful! Verification email sent.');
     console.log('User:', result.data);
-    
+
     // Show a message to the user
     return {
       success: true,
@@ -49,7 +50,7 @@ export async function signUpWithEmailVerification() {
 
 export async function resendVerificationEmail(email: string) {
   try {
-    await authClient.sendVerificationEmail({
+    await sendVerificationEmail({
       email,
       callbackURL: '/dashboard', // Where to redirect after verification
     });
@@ -75,7 +76,7 @@ export async function resendVerificationEmail(email: string) {
 
 export async function verifyEmailWithToken(token: string) {
   try {
-    await authClient.verifyEmail({
+    await verifyEmail({
       query: {
         token,
       },
@@ -101,7 +102,7 @@ export async function verifyEmailWithToken(token: string) {
 
 export async function signInWithVerificationCheck() {
   try {
-    const result = await authClient.signIn.email(
+    const result = await signIn.email(
       {
         email: 'user@example.com',
         password: 'SecurePassword123!',
@@ -140,7 +141,7 @@ export async function signInWithVerificationCheck() {
 
 export async function sendEmailVerificationOTP(email: string) {
   try {
-    await authClient.emailOtp.sendVerificationOtp({
+    await emailOtp.sendVerificationOtp({
       email,
       type: 'email-verification',
     });
@@ -160,7 +161,7 @@ export async function sendEmailVerificationOTP(email: string) {
 
 export async function verifyEmailWithOTP(email: string, otp: string) {
   try {
-    await authClient.emailOtp.verifyEmail({
+    await emailOtp.verifyEmail({
       email,
       otp,
     });
@@ -186,7 +187,7 @@ export async function verifyEmailWithOTP(email: string, otp: string) {
 export async function signInWithOTP(email: string) {
   try {
     // Step 1: Send OTP to user's email
-    await authClient.emailOtp.sendVerificationOtp({
+    await emailOtp.sendVerificationOtp({
       email,
       type: 'sign-in',
     });
@@ -208,7 +209,7 @@ export async function signInWithOTP(email: string) {
 export async function completeOTPSignIn(email: string, otp: string) {
   try {
     // Step 2: Verify OTP and sign in
-    const result = await authClient.signIn.emailOtp({
+    const result = await signIn.emailOtp({
       email,
       otp,
     });
@@ -234,8 +235,8 @@ export async function completeOTPSignIn(email: string, otp: string) {
 
 export async function checkEmailVerificationStatus() {
   try {
-    const session = await authClient.getSession();
-    
+    const session = await getSession();
+
     if (!session?.user) {
       return {
         isVerified: false,
@@ -246,8 +247,8 @@ export async function checkEmailVerificationStatus() {
     return {
       isVerified: session.user.emailVerified,
       email: session.user.email,
-      message: session.user.emailVerified 
-        ? 'Email is verified' 
+      message: session.user.emailVerified
+        ? 'Email is verified'
         : 'Email is not verified',
     };
   } catch (error: any) {
@@ -289,7 +290,7 @@ export function EmailVerificationForm() {
         onChange={(e) => setEmail(e.target.value)}
         placeholder="Enter your email"
       />
-      <button 
+      <button
         onClick={handleResendVerification}
         disabled={loading}
       >

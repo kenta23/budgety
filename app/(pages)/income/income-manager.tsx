@@ -547,7 +547,7 @@ export function IncomeManager() {
                                             size="icon"
                                             className="cursor-pointer hover:bg-green-100 hover:text-green-600"
                                             onClick={() =>
-                                                openViewDialog({ ...item, date: item.createdAt.toISOString() })
+                                                openViewDialog({ ...item, createdAt: item.createdAt as Date })
                                             }
                                         >
                                             <IconEye size={18} />
@@ -557,7 +557,7 @@ export function IncomeManager() {
                                             size="icon"
                                             className="cursor-pointer hover:bg-blue-100 hover:text-blue-600"
                                             onClick={() =>
-                                                openEditDialog({ ...item, date: item.createdAt.toISOString() })
+                                                openEditDialog({ ...item, createdAt: item.createdAt as Date })
                                             }
                                         >
                                             <IconEdit size={18} />
