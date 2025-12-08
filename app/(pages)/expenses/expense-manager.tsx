@@ -755,8 +755,8 @@ export function ExpenseManager() {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-xl font-bold">{viewingExpense.description}</h3>
-                                    <Badge variant="secondary" className="mt-1">
-                                        {viewingExpense.category}
+                                    <Badge variant="outline" className="mt-1">
+                                        {viewingExpense.category.charAt(0).toUpperCase() + viewingExpense.category.slice(1)}
                                     </Badge>
                                 </div>
                             </div>
