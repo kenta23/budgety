@@ -1,7 +1,6 @@
 "use client";
 
 import {
-    IconBriefcase,
     IconCash,
     IconChartLine,
     IconEdit,
@@ -20,14 +19,9 @@ import { toast } from "sonner";
 import z from "zod";
 import { deleteIncome, editIncome, getIncome } from "@/app/actions/income";
 import { submitNewIncome } from "@/app/actions/query";
-import {
-    frequencyLabels,
-    incomeColors,
-    incomeIcons,
-    incomeSources,
-    incomeSourcesType,
-} from "@/data";
+import { frequencyLabels, incomeColors, incomeIcons, incomeSources } from "@/data";
 import { useSession } from "@/lib/auth-client";
+import { type incomeItem, incomeItems } from "@/types";
 import { Button } from "../../../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../components/ui/card";
 import {
@@ -51,15 +45,6 @@ import {
 import EditIncomeDialog from "./edit-income-dialog";
 import { ViewIncomeDialog } from "./view-income-dialog";
 
-type IncomeItem = {
-    id?: string;
-    amount: number;
-    source: string;
-    frequency: string;
-    income_name: string;
-    date?: string;
-};
-
 const incomeSchema = z.object({
     amount: z.number().positive("Amount must be greater than 0"),
     source: z.string().min(1, "Please select an income source"),
@@ -67,38 +52,12 @@ const incomeSchema = z.object({
     income_name: z.string().min(1, "Income name is required"),
 });
 
-const initialState = {
-    message: "",
-    error: null,
-};
-
-// type FormData = {
-//     amount: number;
-//     source: string;
-//     frequency: string;
-//     income_name: string;
-// };
-
-type IncomeItemType = {
-    source: string;
-    amount: number;
-    id: string;
-    frequency: string;
-    income_name: string;
-    createdAt: Date;
-    updatedAt: Date;
-    userId: string;
-};
-
-type incomeType = IncomeItemType[];
-
 export function IncomeManager() {
     const { data: session } = useSession();
-    const [incomeItems, setIncomeItems] = useState<IncomeItem[]>([]);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<IncomeItem | null>(null);
-    const [viewingItem, setViewingItem] = useState<IncomeItem | null>(null);
+    const [editingItem, setEditingItem] = useState<incomeItem | null>(null);
+    const [viewingItem, setViewingItem] = useState<incomeItem | null>(null);
     const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
     const queryClient = useQueryClient();
     const [formData, setFormData] = useState({
@@ -140,7 +99,10 @@ export function IncomeManager() {
     //optimistic update
     // Define action types for optimistic updates
 
-    type OptimisticAction = { type: "delete"; id: string } | { type: "add"; item: IncomeItemType } | { type: "edit"; item: IncomeItemType };
+    type OptimisticAction =
+        | { type: "delete"; id: string }
+        | { type: "add"; item: incomeItem }
+        | { type: "edit"; item: incomeItem };
 
     const [optimisticIncomeData, optimisticUpdate] = useOptimistic(
         incomeData?.data || [],
@@ -149,10 +111,14 @@ export function IncomeManager() {
                 return state.filter((item) => item.id !== action.id);
             }
             if (action.type === "add") {
-                return [...state, action.item].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                return [...state, action.item].sort(
+                    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                );
             }
             if (action.type === "edit") {
-                return state.map((item) => item.id === action.item.id ? { ...item, ...action.item } : item);
+                return state.map((item) =>
+                    item.id === action.item.id ? { ...item, ...action.item } : item
+                );
             }
             return state;
         }
@@ -160,7 +126,7 @@ export function IncomeManager() {
 
     //mutation
     const { mutate: editIncomeMutation, isPending: isEditPending } = useMutation({
-        mutationKey: ['editIncome'],
+        mutationKey: ["editIncome"],
         onSuccess: (data) => {
             toast.success(data.message, {
                 description: "Income has been updated successfully",
@@ -172,8 +138,9 @@ export function IncomeManager() {
                 description: "Failed to edit income",
             });
         },
-        mutationFn: async ({ formData, id }: { formData: Partial<IncomeItemType>, id: string }) => await editIncome(formData, id)
-    })
+        mutationFn: async ({ formData, id }: { formData: Partial<incomeItem>; id: string }) =>
+            await editIncome(formData, id),
+    });
 
     const {
         mutate: submitNewIncomeMutation,
@@ -181,7 +148,8 @@ export function IncomeManager() {
         isSuccess,
     } = useMutation({
         mutationKey: ["submitNewIncome"],
-        mutationFn: async (formdata: Omit<IncomeItemType, "id" | "createdAt" | "updatedAt" | "userId">) => await submitNewIncome(formdata),
+        mutationFn: async (formdata: Omit<incomeItem, "id" | "createdAt" | "updatedAt" | "userId">) =>
+            await submitNewIncome(formdata),
         onSuccess: (data) => {
             toast.success(data.message, {
                 description: `${formData.income_name} has been added to your income list.`,
@@ -197,24 +165,6 @@ export function IncomeManager() {
             });
         },
     });
-
-    useEffect(() => {
-        const stored = localStorage.getItem("income");
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored) as IncomeItem[];
-                setIncomeItems(parsed);
-            } catch (error) {
-                console.error("Error parsing income items:", error);
-            }
-        }
-    }, []);
-
-    const saveIncomeItems = (items: IncomeItem[]) => {
-        localStorage.setItem("income", JSON.stringify(items));
-        setIncomeItems(items);
-        window.dispatchEvent(new Event("incomeUpdated"));
-    };
 
     const resetForm = () => {
         setFormData({
@@ -250,7 +200,6 @@ export function IncomeManager() {
             });
             submitNewIncomeMutation(parsedData?.data);
         });
-
     };
 
     const handleEditIncome = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -260,9 +209,18 @@ export function IncomeManager() {
         try {
             setIsEditDialogOpen(false);
 
-
             startTransition(() => {
-                optimisticUpdate({ type: "edit", item: { ...editingItem, ...formData, id: editingItem.id as string, createdAt: new Date(), updatedAt: new Date(), userId: session?.user?.id as string } });
+                optimisticUpdate({
+                    type: "edit",
+                    item: {
+                        ...editingItem,
+                        ...formData,
+                        id: editingItem.id as string,
+                        createdAt: new Date(),
+                        updatedAt: new Date(),
+                        userId: session?.user?.id as string,
+                    },
+                });
                 editIncomeMutation({ formData, id: editingItem.id as string });
                 setEditingItem(null);
                 resetForm();
@@ -270,7 +228,6 @@ export function IncomeManager() {
         } catch (error) {
             setErrors(error as z.ZodError);
         }
-
     };
 
     const handleDeleteIncome = (id: string) => {
@@ -282,7 +239,7 @@ export function IncomeManager() {
         deleteIncomeMutation(id);
     };
 
-    const openEditDialog = (item: IncomeItem) => {
+    const openEditDialog = (item: incomeItem) => {
         setEditingItem(item);
         setFormData({
             amount: item.amount,
@@ -294,7 +251,7 @@ export function IncomeManager() {
         setErrors(null);
     };
 
-    const openViewDialog = (item: IncomeItem) => {
+    const openViewDialog = (item: incomeItem) => {
         setViewingItem(item);
         setIsViewDialogOpen(true);
     };
@@ -433,11 +390,11 @@ export function IncomeManager() {
                                             step="0.01"
                                             placeholder="0.00"
                                             className="pl-6"
-                                            value={formData.amount === 0 ? '' : formData.amount}
+                                            value={formData.amount === 0 ? "" : formData.amount}
                                             disabled={isPending}
                                             onChange={(e) => {
-                                                const numValue = e.target.value === '' ? 0 : Number(e.target.value);
-                                                setFormData({ ...formData, amount: numValue })
+                                                const numValue = e.target.value === "" ? 0 : Number(e.target.value);
+                                                setFormData({ ...formData, amount: numValue });
                                             }}
                                         />
                                     </div>
@@ -630,13 +587,16 @@ export function IncomeManager() {
             </div>
 
             {/* Edit Dialog */}
-            <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
-                if (!open) {
-                    setIsEditDialogOpen(false);
-                    setEditingItem(null);
-                    resetForm();
-                }
-            }}>
+            <Dialog
+                open={isEditDialogOpen}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setIsEditDialogOpen(false);
+                        setEditingItem(null);
+                        resetForm();
+                    }
+                }}
+            >
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Edit Income</DialogTitle>
@@ -663,7 +623,12 @@ export function IncomeManager() {
                         >
                             Cancel
                         </Button>
-                        <Button className="cursor-pointer" type="button" onClick={handleEditIncome} disabled={isEditPending}>
+                        <Button
+                            className="cursor-pointer"
+                            type="button"
+                            onClick={handleEditIncome}
+                            disabled={isEditPending}
+                        >
                             {isEditPending ? (
                                 <IconLoader2 className="animate-spin" size={18} />
                             ) : (
